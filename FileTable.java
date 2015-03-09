@@ -110,6 +110,7 @@ public class FileTable {
 
       }
 
+       //converts mode string to a short that can be used elsewhere 
        public short getAccessMode(String inputString)
        {
            if ( inputString.compareTo( "a" ) == 0 )
