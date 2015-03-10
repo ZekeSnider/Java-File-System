@@ -63,4 +63,19 @@ public class Inode {
 
 
       }
+
+      public short getIndexBlockNumber( ) 
+      {
+
+      }
+      
+      public boolean setIndexBlock( short indexBlockNumber )
+      {
+
+      }
+
+      public short findTargetBlock( int offset ) 
+      {
+
+      } 
    }
