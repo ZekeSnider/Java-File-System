@@ -38,13 +38,44 @@ class Superblock
 
       }
 
+      //dequeue from the freeblock list
       public short getFreeBlock()
       {
+      	//if the freeList is invalid, return an error
+      	if (freeList <= || freeList > totalBlocks)
+      		return -1;
+
+      	int freeBlock = freeList;
+
+      	byte[] newBlock = new byte[Disk.blockSize];
+
+      	SysLib.rawread(freeList, newBlock);
+      	SysLib.int2bytes(0, newBlock, 0);
+      	SysLib.rawwrite(freeList, newBlock)
+
+      	freeList = SysLib.bytes2int(newBlock, 0);
+
+      	return freeBlock
+
 
       }
 
+      //enqueue a new entry to the freeblock list.
       public boolean returnBlock(int blockNumber)
       {
+
+      	//if the freeList is invalid, return an error
+      	if (blockNumber <= || blockNumber > totalBlocks)
+      		return false;
+
+      	byte[] newBlock = new byte[Disk.blockSize];
+
+      	SysLib.int2bytes(freeList, newBlock, 0);
+      	SysLib.rawwrite(blockNumber, newBlock)
+
+      	freeList = blockNumber;
+
+      	return freeBlock
 
       }
 }

@@ -66,16 +66,49 @@ public class Inode {
 
       public short getIndexBlockNumber( ) 
       {
-
+         return indirect;
       }
-      
+
       public boolean setIndexBlock( short indexBlockNumber )
       {
+         //if the indexBlockNumber is not valid or if the indirect block
+         //is already allocated, return an error.
+         if (indexBlockNumber < 0 || indirect != -1)
+            return false;
 
+         //don't allow allocation if any of the direct blocks are available
+         for (int i=0; i< directSize; i++)
+            if (direct[i] == -1)
+               return false;
+
+         byte[] writeData =  new byte[Disk.blockSize];
+         for (int i=0; i<Disk.blockSize/2; i+=2)
+         {
+            SysLib.short2bytes(-1, writeData, i);
+         }
+         SysLib.rawwrite(indexBlockNumber, writeData);
+         return true;
       }
 
       public short findTargetBlock( int offset ) 
       {
+         int blockNum = offset/Disk.blockSize;
+
+         //if the block is in direct memory, just return it
+         if (blockNum < directSize)
+            return direct[blockNum];
+
+         //if the indirect pointer is not null, look for it in indirect
+         if (indirect != -1)
+         {
+            indirectRead = new byte[Disk.blockSize];
+            SysLib.rawread(indirect, indirectRead);
+            int blockLocation = blockNum - directSize;
+
+            return SysLib.bytes2short(indirectRead, blockLocation * 2);
+         }
+         else  //return an error if it's supposed to be in indirect but indirect is emtpy
+            return -1;
 
       } 
    }
