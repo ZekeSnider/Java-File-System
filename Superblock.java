@@ -78,4 +78,46 @@ class SuperBlock
       	return freeBlock
 
       }
+
+      public void format(int newInodeCount)
+      {	
+      		//resetting the total inode count
+      		totalInodes = newInodeCount;
+
+      		//creating a new node for each inode, then writing it to disk
+      		for (int i=0; i< newInodeCount; i++)
+      		{
+      			Inode newInode = newInode();
+      			newInode.toDisk((short) i);
+      		}
+
+      		//setting the new location of the freelist
+      		if (iNodes % 16 == 0)
+      			freeLsit = newInodeCount / 16 + 1
+      		else
+      			freeList = newInodeCount / 16 + 2
+
+      		//loop from the second to last block to the end of the freeList
+      		for (int i=totalBlocks - 2; i>=freeList; i--)
+      		{
+      			//creating a new empty block
+      			byte[] newBlock = new byte[Disk.blockSize];
+      			for (int j=0; j<Disk.BlockSize; j++)
+      				newblock[j] = (byte)0;
+      			//writing the block number of the next block to the begining of the block
+      			SysLib.int2bytes(i+1, newBlock, 0);
+      			//writing the block to disk
+      			SysLib.rawwrite(i,newBlock)
+      		}
+
+      		//the last block will be a null pointer, creating it and 
+      		//writing it to disk.
+      		byte[] lastBlock = new byte[Disk.blockSize];
+      		SysLib.in2bytes(-1, lastBlock, 0);
+      		SysLib.rawwrite(totalBlocks - 1, lastBlock);
+
+      		//syncing formatted blocks back to the disk
+      		sync();
+      	
+      }
 }
