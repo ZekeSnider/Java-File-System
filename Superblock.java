@@ -16,14 +16,14 @@ class SuperBlock
       		return;
       	else {
       		totalBlocks = diskSize;
-      		format(defaultInodeBlocks);
+      		format(totalBlocks);
       	}
       }
 
-      public sync() 
+      public void sync() 
       {
       		//initliazing byte stream
-      		byte backUpBlock = new byte[Disk.blockSize];
+      		byte backUpBlock[] = new byte[Disk.blockSize];
 
       		//converting the values to bytes and writing to the backUpBlock
       		SysLib.int2bytes(totalBlocks, backUpBlock, 0 );
@@ -34,7 +34,7 @@ class SuperBlock
       		SysLib.rawwrite(0, backUpBlock);
 
       		//outputting confirmation to console
-      		Kernel.report("The Superblock has been synced back to the disk.\n")
+      		SysLib.cout("The Superblock has been synced back to the disk.\n");
 
       }
 
@@ -42,7 +42,7 @@ class SuperBlock
       public short getFreeBlock()
       {
       	//if the freeList is invalid, return an error
-      	if (freeList <= || freeList > totalBlocks)
+      	if (freeList <= 0 || freeList > totalBlocks)
       		return -1;
 
       	int freeBlock = freeList;
@@ -51,11 +51,11 @@ class SuperBlock
 
       	SysLib.rawread(freeList, newBlock);
       	SysLib.int2bytes(0, newBlock, 0);
-      	SysLib.rawwrite(freeList, newBlock)
+      	SysLib.rawwrite(freeList, newBlock);
 
       	freeList = SysLib.bytes2int(newBlock, 0);
 
-      	return freeBlock
+      	return (short)freeBlock;
 
 
       }
@@ -65,17 +65,17 @@ class SuperBlock
       {
 
       	//if the freeList is invalid, return an error
-      	if (blockNumber <= || blockNumber > totalBlocks)
+      	if (blockNumber <= 0|| blockNumber > totalBlocks)
       		return false;
 
       	byte[] newBlock = new byte[Disk.blockSize];
 
       	SysLib.int2bytes(freeList, newBlock, 0);
-      	SysLib.rawwrite(blockNumber, newBlock)
+      	SysLib.rawwrite(blockNumber, newBlock);
 
       	freeList = blockNumber;
 
-      	return freeBlock
+      	return true;
 
       }
 
@@ -87,33 +87,34 @@ class SuperBlock
       		//creating a new node for each inode, then writing it to disk
       		for (int i=0; i< newInodeCount; i++)
       		{
-      			Inode newInode = newInode();
+      			Inode newInode = new Inode();
       			newInode.toDisk((short) i);
       		}
 
       		//setting the new location of the freelist
-      		if (iNodes % 16 == 0)
-      			freeLsit = newInodeCount / 16 + 1
+      		if (totalInodes % 16 == 0)
+      			freeList = newInodeCount / 16 + 1;
       		else
-      			freeList = newInodeCount / 16 + 2
+      			freeList = newInodeCount / 16 + 2;
 
       		//loop from the second to last block to the end of the freeList
       		for (int i=totalBlocks - 2; i>=freeList; i--)
       		{
       			//creating a new empty block
       			byte[] newBlock = new byte[Disk.blockSize];
-      			for (int j=0; j<Disk.BlockSize; j++)
-      				newblock[j] = (byte)0;
+
+      			for (int j=0; j<Disk.blockSize; j++)
+      				newBlock[j] = (byte)0;
       			//writing the block number of the next block to the begining of the block
       			SysLib.int2bytes(i+1, newBlock, 0);
       			//writing the block to disk
-      			SysLib.rawwrite(i,newBlock)
+      			SysLib.rawwrite(i,newBlock);
       		}
 
       		//the last block will be a null pointer, creating it and 
       		//writing it to disk.
       		byte[] lastBlock = new byte[Disk.blockSize];
-      		SysLib.in2bytes(-1, lastBlock, 0);
+      		SysLib.int2bytes(-1, lastBlock, 0);
       		SysLib.rawwrite(totalBlocks - 1, lastBlock);
 
       		//syncing formatted blocks back to the disk

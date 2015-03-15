@@ -84,7 +84,7 @@ public class Inode {
          byte[] writeData =  new byte[Disk.blockSize];
          for (int i=0; i<Disk.blockSize/2; i+=2)
          {
-            SysLib.short2bytes(-1, writeData, i);
+            SysLib.short2bytes((short)-1, writeData, i);
          }
          SysLib.rawwrite(indexBlockNumber, writeData);
          return true;
@@ -101,7 +101,7 @@ public class Inode {
          //if the indirect pointer is not null, look for it in indirect
          if (indirect != -1)
          {
-            indirectRead = new byte[Disk.blockSize];
+            byte[] indirectRead = new byte[Disk.blockSize];
             SysLib.rawread(indirect, indirectRead);
             int blockLocation = blockNum - directSize;
 
