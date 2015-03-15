@@ -6,6 +6,18 @@ public class SysLib {
 				 Kernel.EXEC, 0, args );
     }
 
+    public static int close(int s)
+    {
+        return Kernel.interrupt( Kernel.INTERRUPT_SOFTWARE,
+            Kernel.CLOSE, s, null);
+    }
+
+    public static int format(int s)
+    {
+        return Kernel.interrupt( Kernel.INTERRUPT_SOFTWARE,
+            Kernel.FORMAT, s, null);
+    }
+
     public static int join( ) {
         return Kernel.interrupt( Kernel.INTERRUPT_SOFTWARE,
 				 Kernel.WAIT, 0, null );
@@ -116,15 +128,10 @@ public class SysLib {
     	return n;
     }
 
-
-    public int format (int files )
-    {
-        return 0;
-    }
-
     public int open (String fileName, String mode )
     {
-        return 0;
+        String[] argArray = {fileName, mode};
+        return Kernel.interrupt(Kernel.INTERRUPT_SOFTWARE, Kernel.OPEN, 0, argArray);
     }
 
 }
