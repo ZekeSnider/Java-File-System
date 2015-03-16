@@ -63,6 +63,11 @@ public class SysLib {
 				 Kernel.RAWREAD, blkNumber, b );
     }
 
+    public static int read( int blkNumber, byte[] b ) {
+        return Kernel.interrupt( Kernel.INTERRUPT_SOFTWARE,
+                 Kernel.READ, blkNumber, b );
+    }
+
     public static int rawwrite( int blkNumber, byte[] b ) {
         return Kernel.interrupt( Kernel.INTERRUPT_SOFTWARE,
 				 Kernel.RAWWRITE, blkNumber, b );
@@ -81,6 +86,11 @@ public class SysLib {
     public static int cwrite( int blkNumber, byte[] b ) {
         return Kernel.interrupt( Kernel.INTERRUPT_SOFTWARE,
 				 Kernel.CWRITE, blkNumber, b );
+    }
+
+    public static int write( int blkNumber, byte[] b ) {
+        return Kernel.interrupt( Kernel.INTERRUPT_SOFTWARE,
+                 Kernel.WRITE, blkNumber, b );
     }
 
     public static int flush( ) {
@@ -128,7 +138,7 @@ public class SysLib {
     	return n;
     }
 
-    public int open (String fileName, String mode )
+    public static int open (String fileName, String mode )
     {
         String[] argArray = {fileName, mode};
         return Kernel.interrupt(Kernel.INTERRUPT_SOFTWARE, Kernel.OPEN, 0, argArray);
