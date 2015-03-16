@@ -270,7 +270,7 @@ public class FileSystem
 		}
 
 		// return 
-				return isDeleted;
+		return isDeleted;
 	}
 
 	// 8. returns the size in bytes of the file indicated by fd
@@ -291,7 +291,7 @@ public class FileSystem
 		{
 			isFileTableEmpty = filetable.fempty();
 		}
-		
+
 		// format other class fields
 		superblock.format(files);
 		directory = new Directory(superblock.totalInodes);
@@ -300,7 +300,15 @@ public class FileSystem
 		return 0;
 	}
 
-	// TODO: Sync()
-	
-	
+	// Sync()
+	void sync()
+	{
+		FileTableEntry fileTableEntry = open("/", "w");
+	    byte[] buffer = directory.directory2bytes();
+	    write(fileTableEntry, buffer);
+	    close(fileTableEntry);
+
+	    this.superblock.sync();
+	}
+
 }
