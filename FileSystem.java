@@ -252,11 +252,11 @@ public class FileSystem
     
     // 7.
     // [FINISHED]
-    int delete(String fileName)
+    boolean delete(String fileName)
     {
         //destroys the file specified by fileName. If the file is currently open, it is not 
         //destroyed until the last open on it is closed, but new attempts to open it will fail.
-        int isDeleted = -1;
+        boolean isDeleted = false;
         
         // opens Entry
         FileTableEntry fileTableEnt = open(fileName, "w");
@@ -266,7 +266,7 @@ public class FileSystem
         
         if(close(fileTableEnt) == 0 && directory.ifree(iNodeNumber))
         {
-            isDeleted = 0;
+            isDeleted = true;
         }
         
         // return 
