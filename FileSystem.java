@@ -135,6 +135,9 @@ public class FileSystem
 	// [FINISHED]
 	int write(FileTableEntry fd, byte[] buffer)
 	{
+		if (fd==null)
+			return -1;
+		
 		// check if reading only
 		if (fd.mode == "r") {
 			return -1;
