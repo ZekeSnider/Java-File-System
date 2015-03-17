@@ -111,4 +111,61 @@ public class Inode {
             return -1;
 
       } 
+      public short setTargetBlock (int offset)
+      {
+         int blockNum;
+         byte[] data;
+         blockNum = offset / Disk.blockSize;
+
+         if (blockNum < directSize)
+            return direct[blockNum];
+
+         if (indirect == -1)
+            return -1;
+
+         data = new byte[Disk.blockSize];
+         SysLib.rawread(indirect, data);
+
+         int targetiBlock = blockNum - directSize;
+         short targetBlock = SysLib.bytes2short(data, targetiBlock*2);
+         return targetBlock;
+      }
+
+      public short setTargetBlock (int iNodeNum, short inputBlock)
+      {
+         int blockNum, iBlockNum;
+         byte[] data;
+
+
+         if (iNodeNum < 0)
+            return -1;
+
+         blockNum = iNodeNum / Disk.blockSize;
+
+         if (blockNum < directSize)
+         {
+            if (direct[blockNum] != -1)
+               return -1;
+            if ((blockNum > 0) && direct[blockNum - 1] == -1)
+               return -1;
+            direct[blockNum] = inputBlock;
+            return 1;
+         }
+         if (indirect == -1)
+            return -1;
+
+         data = new byte[Disk.blockSize];
+         SysLib.rawread(indirect, data);
+
+         iBlockNum = blockNum - directSize;
+         short targetBlock = SysLib.bytes2short(data, iBlockNum*2);
+
+         if (targetBlock > 0 )
+            return -1;
+
+         SysLib.short2bytes(inputBlock, data, iBlockNum*2);
+         SysLib.rawwrite(indirect,data);
+         return 1;
+      }
+
    }
