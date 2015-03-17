@@ -83,8 +83,12 @@ public class Kernel
 		// instantiate synchronized queues
 		ioQueue = new SyncQueue( );
 		waitQueue = new SyncQueue( scheduler.getMaxThreads( ) );
+
+		ioQueue.dequeueAndWakeup(COND_DISK_REQ);
+
 		theFileSystem = new FileSystem(1000);
 		return OK;
+
 	    case EXEC:
 		return sysExec( ( String[] )args );
 	    case WAIT:
@@ -142,11 +146,14 @@ public class Kernel
 		    ioQueue.enqueueAndSleep(COND_DISK_FIN);
 		return OK;
 	    case SYNC:     // synchronize disk data to a real file
-		while ( disk.sync( ) == false )
-		    ioQueue.enqueueAndSleep(COND_DISK_REQ);
-		while ( disk.testAndResetReady( ) == false )
-		    ioQueue.enqueueAndSleep(COND_DISK_FIN);
-		return OK;
+			theFileSystem.sync();
+			ioQueue.enqueueAndSleep(COND_DISK_REQ);
+			if (!disk.sync())
+				System.err.println("threadOS: " + "the disk sync failed.");
+			ioQueue.enqueueAndSleep(COND_DISK_FIN);
+			disk.testAndResetReady();
+			ioQueue.dequeueAndWakeup(COND_DISK_FIN);
+			return OK;
 	    case READ:
 		switch ( param ) {
 		case STDIN:
