@@ -266,24 +266,18 @@ public class FileSystem
 	// 7.
 	// [FINISHED]
 	boolean delete(String fileName)
-	{
-		//destroys the file specified by fileName. If the file is currently open, it is not 
-		//destroyed until the last open on it is closed, but new attempts to open it will fail.
-		boolean isDeleted = false;
-
-		// opens Entry
-		FileTableEntry fileTableEnt = open(fileName, "w");
+	{	
+		if (fileName== "" || fileName == null)
+			return false;
 
 		// get inode number
-		short iNodeNumber = fileTableEnt.iNumber;
+		short iNodeNumber = directory.namei(fileName);
 
-		if(close(fileTableEnt) == 0 && directory.ifree(iNodeNumber))
-		{
-			isDeleted = true;
-		}
+		if (iNodeNumber == -1)
+			return false;
 
 		// return 
-		return isDeleted;
+		return directory.ifree(iNodeNumber);
 	}
 
 	// 8. returns the size in bytes of the file indicated by fd
