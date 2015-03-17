@@ -42,6 +42,7 @@ public class FileTable {
                if ( ((int) iNodeNum) == -1) 
                   return null;
 
+               newInode = new Inode(iNodeNum);
                break;
             }
             else 
@@ -65,7 +66,6 @@ public class FileTable {
 
             }
          }
-
          newInode.count++;
          newInode.toDisk(iNodeNum);
 
