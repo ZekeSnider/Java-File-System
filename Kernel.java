@@ -217,10 +217,8 @@ public class Kernel
 	    case CLOSE:   // to be implemented in project
 			if ((myTcb = scheduler.getMyTcb())!= null)
 		    {
-		    	String[] arguments = (String[])args;
-		    	FileTableEntry newEntry = theFileSystem.open(arguments[0], arguments[1]);
-		    	int fd = myTcb.getFd(newEntry);
-		    	return fd;
+		    	FileTableEntry theEntry = myTcb.returnFd(param);
+		    	return theFileSystem.close(theEntry);
 		    } else
 		    	return ERROR;
 
