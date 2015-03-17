@@ -144,4 +144,16 @@ public class SysLib {
         return Kernel.interrupt(Kernel.INTERRUPT_SOFTWARE, Kernel.OPEN, 0, argArray);
     }
 
+    public static int delete (String fileName)
+    {
+        return Kernel.interrupt(Kernel.INTERRUPT_SOFTWARE, Kernel.DELETE, 0, fileName);
+    }
+
+
+    public static int seek (int i, int offset, int j )
+    {
+        int[] argArray = {offset, j};
+        return Kernel.interrupt(Kernel.INTERRUPT_SOFTWARE, Kernel.SEEK, 0, argArray);
+    }
+
 }

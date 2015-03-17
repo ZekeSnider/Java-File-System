@@ -193,32 +193,35 @@ public class FileSystem
 		//If the user attempts to set the seek pointer to a negative number you must clamp it to zero. If the user attempts to set the pointer to beyond the file size, you must set the seek pointer to the end of the file. In both cases, you should return success.
 
 		int retVal = -1;
-
-		synchronized(fd)
+		if(fd != null)
 		{
-			if(whence == 0
-					&& (offset <= fsize(fd))
-					&& (offset >= 0))
+			synchronized(fd)
 			{
-				fd.seekPtr = offset;
-				retVal = fd.seekPtr;
+				if(whence == 0
+						&& (offset <= fsize(fd))
+						&& (offset >= 0))
+				{
+					fd.seekPtr = offset;
+					retVal = fd.seekPtr;
+				}
+				else if(whence == 1
+						&& (fd.seekPtr + offset <= fsize(fd)) 
+						&& (fd.seekPtr + offset >= 0))
+				{
+					fd.seekPtr += offset;
+					retVal = fd.seekPtr;
+				}
+				else if(whence == 2 
+						&& (fsize(fd) + offset <= fsize(fd)) 
+						&& (fsize(fd) + offset >= 0))
+				{
+					fd.seekPtr = (fsize(fd) + offset);
+					retVal = fd.seekPtr;
+				}
 			}
-			else if(whence == 1
-					&& (fd.seekPtr + offset <= fsize(fd)) 
-					&& (fd.seekPtr + offset >= 0))
-			{
-				fd.seekPtr += offset;
-				retVal = fd.seekPtr;
-			}
-			else if(whence == 2 
-					&& (fsize(fd) + offset <= fsize(fd)) 
-					&& (fsize(fd) + offset >= 0))
-			{
-				fd.seekPtr = (fsize(fd) + offset);
-				retVal = fd.seekPtr;
-			}
-		}
-		return retVal;
+			return retVal;
+		} else
+			return -1;
 	}
 
 	// 6. 
@@ -229,25 +232,29 @@ public class FileSystem
 		//unregisters fd from the user file descriptor table of the calling thread's TCB. The 
 		//return value is 0 in success, otherwise -1.
 		int retVal = -1;
-		synchronized (fd) 
+		if (fd != null)
 		{
-			fd.count--;
-			if (fd.count > 0)
+			synchronized (fd) 
+			{
+				fd.count--;
+				if (fd.count > 0)
+				{
+					retVal = 0;
+				}
+			}
+
+			if(filetable.ffree(fd))
 			{
 				retVal = 0;
 			}
-		}
+			else
+			{
+				retVal = -1;
+			}
 
-		if(filetable.ffree(fd))
-		{
-			retVal = 0;
-		}
-		else
-		{
-			retVal = -1;
-		}
-
-		return retVal;
+			return retVal;
+		} else
+			return -1;
 	}
 
 	// 7.

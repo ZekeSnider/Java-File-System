@@ -104,7 +104,7 @@ public class Directory {
                for (int j = 0; j < copyLimit; j++)
                {
                   //converting character from string to char, then placing it in array
-                  char stringChar = filename.charAt(i);
+                  char stringChar = filename.charAt(j);
                   fnames[i][j] = stringChar;
                }
                //returning inode number
