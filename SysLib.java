@@ -153,7 +153,7 @@ public class SysLib {
     public static int seek (int i, int offset, int j )
     {
         int[] argArray = {offset, j};
-        return Kernel.interrupt(Kernel.INTERRUPT_SOFTWARE, Kernel.SEEK, 0, argArray);
+        return Kernel.interrupt(Kernel.INTERRUPT_SOFTWARE, Kernel.SEEK, i, argArray);
     }
 
 }

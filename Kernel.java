@@ -251,8 +251,8 @@ public class Kernel
 				FileTableEntry theEntry = myTcb.getFtEnt(param);
 				int[] argArray = (int[])args;
 				return theFileSystem.seek(theEntry, argArray[0], argArray[1]);
-			}
-			return ERROR;
+			} else
+				return ERROR;
 
 	    case FORMAT:  // to be implemented in project
 			if (theFileSystem.format(param) == true)
