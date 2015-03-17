@@ -88,43 +88,61 @@ public class FileSystem
 	// [FINISHED]
 	int read(FileTableEntry fd, byte[] buffer)
 	{
+		int bytesRead = 0;
+		int bufferLength = buffer.length;
+		int offsetPosition, remainingBytes, diskBytes, toRead, indexPosition, seekPtr;
+		Inode theInode;
 		if(fd == null)
 			return -1;
 		// check for invalid case: write or append
-		if ((fd.mode.equals("w"))
-				|| (fd.mode.equals("a")))
-		{
+		else if ((fd.mode.equals("w")) || (fd.mode.equals("a")))
 			return -1;
-		}
+		else if ((theInode = fd.inode) == null)
+			return -1;
 
-		// starting at the position currently pointed to by the seek pointer
-		int bytesRead = 0;
-		int bufferLeftOver = buffer.length;
 
 		// If bytes remaining between the current seek pointer and the end of file are
 		// less than buffer.length, SysLib.read reads as many bytes as possible
 		synchronized(fd)
 		{
-			while(fd.seekPtr < fsize(fd) && bufferLeftOver > 0)
+			byte[] readBuffer = new byte[Disk.blockSize];
+			seekPtr = fd.seekPtr;
+			indexPosition = 0;
+			
+			while(indexPosition < bufferLength)
 			{
+				offsetPosition = seekPtr % Disk.blockSize;
+				diskBytes = Disk.blockSize - offsetPosition;
+				remainingBytes = bufferLength - indexPosition;
+
+				if (diskBytes < remainingBytes)
+					toRead = diskBytes;
+				else
+					toRead = remainingBytes;
+
 				// check if block was not found
-				int block = fd.inode.findTargetBlock(fd.seekPtr);
-				if (block == -1)
-				{
+				int block = fd.inode.findTargetBlock(offsetPosition);
+				if (block == -1 )
+					return -1;
+				else if (block< 0 || block>= superblock.totalBlocks)
 					break;
-				}
+
+				if (offsetPosition == 0)
+					readBuffer = new byte[Disk.blockSize];
 
 				// read into readBuffer
-				byte[] readBuffer = new byte[512];
-				SysLib.rawread(block, readBuffer);
-				int increment = Math.min(512 - (fd.seekPtr % 512), fsize(fd));
-				System.arraycopy(readBuffer, (fd.seekPtr % 512), buffer, bytesRead, increment);
-				bufferLeftOver -= increment;
-				fd.seekPtr += increment;
-				bytesRead += increment;
+		
+				if (SysLib.rawread(block, readBuffer) == -1)
+					return -1;
+
+
+				System.arraycopy(readBuffer, offsetPosition, buffer, indexPosition, toRead);
+				indexPosition += toRead;
+				seekPtr += toRead;
 			}
-			return bytesRead;
+			seek(fd, indexPosition, 1);
 		}
+		return indexPosition;
 	}
 
 	// 4. writes the contents of buffer to the file indicated by fd,
@@ -267,7 +285,7 @@ public class FileSystem
 	// [FINISHED]
 	boolean delete(String fileName)
 	{	
-		if (fileName== "" || fileName == null)
+		if (fileName== "" || fileName ==null)
 			return false;
 
 		// get inode number
