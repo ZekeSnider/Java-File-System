@@ -65,6 +65,7 @@ public class Kernel
     // The heart of Kernel
     public static int interrupt( int irq, int cmd, int param, Object args ) {
 	TCB myTcb;
+	FileTableEntry myFTE;
 	switch( irq ) {
 	case INTERRUPT_SOFTWARE: // System calls
 	    switch( cmd ) { 
@@ -155,55 +156,69 @@ public class Kernel
 			ioQueue.dequeueAndWakeup(COND_DISK_FIN);
 			return OK;
 	    case READ:
-		switch ( param ) {
-		case STDIN:
-		    try {
-			String s = input.readLine(); // read a keyboard input
-			if ( s == null ) {
-			    return ERROR;
-			}
-			// prepare a read buffer
-			StringBuffer buf = ( StringBuffer )args;
+			switch ( param ) {
+				case STDIN:
+				    try {
+						String s = input.readLine(); // read a keyboard input
+						if ( s == null ) {
+						    return ERROR;
+						}
+						// prepare a read buffer
+						StringBuffer buf = ( StringBuffer )args;
 
-			// append the keyboard intput to this read buffer
-			buf.append( s ); 
+						// append the keyboard intput to this read buffer
+						buf.append( s ); 
 
-			// return the number of chars read from keyboard
-			return s.length( );
-		    } catch ( IOException e ) {
-			System.out.println( e );
-			return ERROR;
-		    }
-		case STDOUT:
-		case STDERR:
-		    System.out.println( "threaOS: caused read errors" );
-		    return ERROR;
+						// return the number of chars read from keyboard
+						return s.length( );
+				    } catch ( IOException e ) {
+						System.out.println( e );
+						return ERROR;
+				    }
+				case STDOUT:
+
+				case STDERR:
+				    System.out.println( "threaOS: caused read errors" );
+				    return ERROR;
+
+				default:
+					if((myTcb = scheduler.getMyTcb()) != null)
+					{
+						FileTableEntry readEntry = myTcb.getFtEnt(param);
+						return theFileSystem.read(readEntry, (byte[])args);
+					}
 		}
 		// return FileSystem.read( param, byte args[] );
 		return ERROR;
 	    case WRITE:
-		switch ( param ) {
-		case STDIN:
-		    System.out.println( "threaOS: cannot write to System.in" );
-		    return ERROR;
-		case STDOUT:
-		    System.out.print( (String)args );
-		    break;
-		case STDERR:
-		    System.err.print( (String)args );
-		    break;
-		}
-		return OK;
+			switch ( param ) {
+				case STDIN:
+				    System.out.println( "threaOS: cannot write to System.in" );
+				    return ERROR;
+				case STDOUT:
+				    System.out.print( (String)args );
+				    break;
+				case STDERR:
+				    System.err.print( (String)args );
+				    break;
+			default:
+				if ((myTcb = scheduler.getMyTcb()) != null)
+				{
+					myFTE = myTcb.getFtEnt(param);
+					return theFileSystem.write(myFTE, (byte[]) args);
+				}
+			}
+
 	    case CREAD:   // to be implemented in assignment 4
-		return cache.read( param, ( byte[] )args ) ? OK : ERROR;
+			return OK;
 	    case CWRITE:  // to be implemented in assignment 4
-		return cache.write( param, ( byte[] )args ) ? OK : ERROR;
+			return cache.write( param, ( byte[] )args ) ? OK : ERROR;
 	    case CSYNC:   // to be implemented in assignment 4
-		cache.sync( );
-		return OK;
+			cache.sync( );
+			return OK;
 	    case CFLUSH:  // to be implemented in assignment 4
-		cache.flush( );
-		return OK;
+			cache.flush( );
+			return OK;
 	    case OPEN:    // to be implemented in project
 		    if ((myTcb = scheduler.getMyTcb())!= null)
 		    {
@@ -246,11 +261,10 @@ public class Kernel
 				return ERROR;
 
 	    case DELETE:  // to be implemented in project
-	    	String argsString = (String)args;
-			if (theFileSystem.delete(argsString) == true)
-				return OK;
-			else
-				return ERROR;
+	    	if (theFileSystem.delete((String)args) == true)
+	    		return OK;
+	    	else
+	    		return ERROR;
 		}
 		return ERROR;
 
