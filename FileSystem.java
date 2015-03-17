@@ -284,12 +284,13 @@ public class FileSystem
 	}
 
 	// Format()
-	int format(int files)
+	boolean format(int files)
 	{
 		boolean isFileTableEmpty = filetable.fempty();
 		while (!isFileTableEmpty)
 		{
 			isFileTableEmpty = filetable.fempty();
+			return false;
 		}
 
 		// format other class fields
@@ -297,7 +298,7 @@ public class FileSystem
 		directory = new Directory(superblock.totalInodes);
 		filetable = new FileTable(directory);
 
-		return 0;
+		return true;
 	}
 
 	// Sync()

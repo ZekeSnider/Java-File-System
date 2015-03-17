@@ -4,6 +4,7 @@ import java.io.*;
 
 public class Kernel
 {
+	private static FileSystem theFileSystem;
     // Interrupt requests
     public final static int INTERRUPT_SOFTWARE = 1;  // System calls
     public final static int INTERRUPT_DISK     = 2;  // Disk interrupts
@@ -82,6 +83,7 @@ public class Kernel
 		// instantiate synchronized queues
 		ioQueue = new SyncQueue( );
 		waitQueue = new SyncQueue( scheduler.getMaxThreads( ) );
+		theFileSystem = new FileSystem(1000);
 		return OK;
 	    case EXEC:
 		return sysExec( ( String[] )args );
@@ -196,19 +198,57 @@ public class Kernel
 		cache.flush( );
 		return OK;
 	    case OPEN:    // to be implemented in project
-		return OK;
+		    if ((myTcb = scheduler.getMyTcb())!= null)
+		    {
+		    	String[] arguments = (String[])args;
+		    	FileTableEntry newEntry = theFileSystem.open(arguments[0], arguments[1]);
+		    	int fd = myTcb.getFd(newEntry);
+		    	return fd;
+		    } else
+		    	return ERROR;
+
 	    case CLOSE:   // to be implemented in project
-		return OK;
+			if ((myTcb = scheduler.getMyTcb())!= null)
+		    {
+		    	String[] arguments = (String[])args;
+		    	FileTableEntry newEntry = theFileSystem.open(arguments[0], arguments[1]);
+		    	int fd = myTcb.getFd(newEntry);
+		    	return fd;
+		    } else
+		    	return ERROR;
+
 	    case SIZE:    // to be implemented in project
-		return OK;
+	    	if ((myTcb = scheduler.getMyTcb())!= null)
+			{
+				FileTableEntry theEntry = myTcb.getFtEnt(param);
+				return theFileSystem.fsize(theEntry);
+			}
+			return ERROR;
+
 	    case SEEK:    // to be implemented in project
-		return OK;
+			if ((myTcb = scheduler.getMyTcb())!= null)
+			{
+				FileTableEntry theEntry = myTcb.getFtEnt(param);
+				int[] argArray = (int[])args;
+				return theFileSystem.seek(theEntry, argArray[0], argArray[1]);
+			}
+			return ERROR;
+
 	    case FORMAT:  // to be implemented in project
-		return OK;
+			if (theFileSystem.format(param) == true)
+				return OK;
+			else
+				return ERROR;
+
 	    case DELETE:  // to be implemented in project
-		return OK;
-	    }
-	    return ERROR;
+	    	String argsString = (String)args;
+			if (theFileSystem.delete(argsString) == true)
+				return OK;
+			else
+				return ERROR;
+		}
+		return ERROR;
+
 	case INTERRUPT_DISK: // Disk interrupts
 	    // wake up the thread waiting for a service completion
 	    ioQueue.dequeueAndWakeup( COND_DISK_FIN );
