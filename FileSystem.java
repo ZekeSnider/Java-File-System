@@ -88,6 +88,8 @@ public class FileSystem
 	// [FINISHED]
 	int read(FileTableEntry fd, byte[] buffer)
 	{
+		if(fd == null)
+			return -1;
 		// check for invalid case: write or append
 		if ((fd.mode.equals("w"))
 				|| (fd.mode.equals("a")))
@@ -135,6 +137,8 @@ public class FileSystem
 	// [FINISHED]
 	int write(FileTableEntry fd, byte[] buffer)
 	{
+		if (fd == null)
+			return -1;
 		// check if reading only
 		if (fd.mode == "r") {
 			return -1;
@@ -191,6 +195,8 @@ public class FileSystem
 		//If whence is SEEK_CUR (= 1), the file's seek pointer is set to its current value plus the offset. The offset can be positive or negative.
 		//If whence is SEEK_END (= 2), the file's seek pointer is set to the size of the file plus the offset. The offset can be positive or negative.
 		//If the user attempts to set the seek pointer to a negative number you must clamp it to zero. If the user attempts to set the pointer to beyond the file size, you must set the seek pointer to the end of the file. In both cases, you should return success.
+		if (fd==null)
+			return -1;
 
 		int retVal = -1;
 		if(fd != null)
@@ -219,7 +225,7 @@ public class FileSystem
 					retVal = fd.seekPtr;
 				}
 			}
-			return retVal;
+			return fd.seekPtr;
 		} else
 			return -1;
 	}
