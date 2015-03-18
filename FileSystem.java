@@ -92,12 +92,14 @@ public class FileSystem
 		int bufferLength = buffer.length;
 		int offsetPosition, remainingBytes, diskBytes, toRead, indexPosition, seekPtr;
 		Inode theInode;
+		byte[] readBuffer;
 		if(fd == null)
 			return -1;
 		// check for invalid case: write or append
 		else if ((fd.mode.equals("w")) || (fd.mode.equals("a")))
 			return -1;
-		else if ((theInode = fd.inode) == null)
+		
+		if ((theInode = fd.inode) == null)
 			return -1;
 
 
@@ -105,7 +107,8 @@ public class FileSystem
 		// less than buffer.length, SysLib.read reads as many bytes as possible
 		synchronized(fd)
 		{
-			byte[] readBuffer = new byte[Disk.blockSize];
+
+			readBuffer = new byte[Disk.blockSize];
 			seekPtr = fd.seekPtr;
 			indexPosition = 0;
 
@@ -121,7 +124,7 @@ public class FileSystem
 					toRead = remainingBytes;
 
 				// check if block was not found
-				int block = fd.inode.findTargetBlock(offsetPosition);
+				int block = theInode.findTargetBlock(offsetPosition);
 				if (block == -1 )
 					return -1;
 				else if (block< 0 || block>= superblock.totalBlocks)
@@ -173,7 +176,6 @@ public class FileSystem
 			if (fd.mode.compareTo( "a" ) == 0)
 			{
 				seekPtr = seek(fd, 0, 2);
-				SysLib.cout("Hello the mode is append and writing... ptr=" + seekPtr+"\n");
 			}
 			else
 				seekPtr = fd.seekPtr;
@@ -276,11 +278,14 @@ public class FileSystem
 		if (fd==null)
 			return -1;
 
-		int retVal = fd.seekPtr;
-		int eofPtr = fsize(fd);
+		int retVal;
+		int eofPtr;
 
 		synchronized(fd)
 		{
+			retVal = fd.seekPtr;
+			eofPtr = fsize(fd);
+
 			if(whence == 0)
 			{
 				retVal = offset;
@@ -292,13 +297,12 @@ public class FileSystem
 			else if(whence == 2)
 			{
 				retVal = eofPtr + offset;
-				SysLib.cout("In seek. " + retVal + "=" + eofPtr + "+" + offset +  "\n");
 			}
-			else 
-				return -1;
 
 			if (retVal < 0)
-				return -1;
+				retVal = 0;
+			else if (retVal > eofPtr)
+				retVal = eofPtr;
 
 			fd.seekPtr = retVal;
 		}

@@ -94,9 +94,12 @@ public class Inode {
       {
          int blockNum = offset/Disk.blockSize;
 
+         
          //if the block is in direct memory, just return it
          if (blockNum < directSize)
+         {
             return direct[blockNum];
+         }
 
          //if the indirect pointer is not null, look for it in indirect
          if (indirect != -1)
@@ -106,6 +109,7 @@ public class Inode {
             int blockLocation = blockNum - directSize;
 
             return SysLib.bytes2short(indirectRead, blockLocation * 2);
+
          }
          else  //return an error if it's supposed to be in indirect but indirect is emtpy
             return -1;
