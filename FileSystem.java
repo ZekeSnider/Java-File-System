@@ -93,8 +93,10 @@ public class FileSystem
 		int offsetPosition, remainingBytes, diskBytes, toRead, indexPosition, seekPtr;
 		Inode theInode;
 		byte[] readBuffer;
+
 		if(fd == null)
 			return -1;
+
 		// check for invalid case: write or append
 		else if ((fd.mode.equals("w")) || (fd.mode.equals("a")))
 			return -1;
@@ -107,17 +109,20 @@ public class FileSystem
 		// less than buffer.length, SysLib.read reads as many bytes as possible
 		synchronized(fd)
 		{
-
+			//allocating read buffer, setting start seek position and index values
 			readBuffer = new byte[Disk.blockSize];
 			seekPtr = fd.seekPtr;
 			indexPosition = 0;
 
+			//repeat until all data has been read to the buffer
 			while(indexPosition < bufferLength)
 			{
+				//setting read offset, number of bytes left on the disk, and remaining bytes requested vartiables
 				offsetPosition = seekPtr % Disk.blockSize;
 				diskBytes = Disk.blockSize - offsetPosition;
 				remainingBytes = bufferLength - indexPosition;
 
+				//only read up to the buffer's size, or the end of the disk, whichever is smaller
 				if (diskBytes < remainingBytes)
 					toRead = diskBytes;
 				else
@@ -127,24 +132,25 @@ public class FileSystem
 				int block = theInode.findTargetBlock(offsetPosition);
 				if (block == -1 )
 					return -1;
-				else if (block< 0 || block>= superblock.totalBlocks)
+				else if (block< 0 || block>= superblock.totalBlocks) //invalid block cases
 					break;
 
 				if (offsetPosition == 0)
 					readBuffer = new byte[Disk.blockSize];
 
 				// read into readBuffer
-		
 				if (SysLib.rawread(block, readBuffer) == -1)
 					return -1;
 
-
+				//copy the read data into the buffer
 				System.arraycopy(readBuffer, offsetPosition, buffer, indexPosition, toRead);
-				indexPosition += toRead;
+				indexPosition += toRead; //increment read positions
 				seekPtr += toRead;
 			}
+			//re-set the seekPointer's position 
 			seek(fd, indexPosition, 1);
 		}
+		//return last read position
 		return indexPosition;
 	}
 
@@ -161,6 +167,8 @@ public class FileSystem
 		int offsetPosition, remainingBytes, diskBytes, toWrite, indexPosition, seekPtr;
 		short block;
 		Inode theNode;
+
+		//Checking for invalid states
 		if (fd == null || fd.mode == "r")
 			return -1;
 		else if ((theNode = fd.inode) == null)
@@ -170,15 +178,17 @@ public class FileSystem
 
 		int bufferLength = buffer.length;
 
-
 		synchronized (fd)
 		{
+			//if the mode is append, set the seek pointer to the end of the block
 			if (fd.mode.compareTo( "a" ) == 0)
 			{
 				seekPtr = seek(fd, 0, 2);
 			}
 			else
-				seekPtr = fd.seekPtr;
+				seekPtr = fd.seekPtr; //otherwise, set the seekpointer to the last position
+
+			//set flag to write
 			theNode.flag = 3;
 			indexPosition = 0;
 			byte[] writeData = new byte[Disk.blockSize];
@@ -189,12 +199,15 @@ public class FileSystem
 			// run loop as long as buffer isn't empty
 			while (indexPosition < bufferLength)
 			{
+				//setting offset, remaining bytes in buffer, and remaining bytes on disk variables
 				offsetPosition = seekPtr % Disk.blockSize;
 			
 				remainingBytes = bufferLength - indexPosition;
 
 				diskBytes = Disk.blockSize - offsetPosition;
 
+				//if the space requested is greater than the space remaining on the disk,
+				//write until the space is filled. otherwise write the whole thing
 				if (diskBytes < remainingBytes)
 					toWrite = diskBytes;
 				else
@@ -206,23 +219,28 @@ public class FileSystem
 					//Try to allocate new block, check if out of memory
 					if ((block = superblock.getFreeBlock()) == -1)
 					{
-						//error out of memory
+						//error out of memory, set delete flag then break
 						theNode.flag = 4;
 						break;
 					}
 
+					//if the block couldn't be found
 					if (theNode.setTargetBlock(seekPtr, block) == -1)
 					{
+						//attempt to set index block, set delete flag and break on any errors
 						if (!theNode.setIndexBlock(block))
 						{
 							theNode.flag = 4;
 							break;
 						}
+						//get a new free block
 						if ((block = superblock.getFreeBlock()) == -1)
 						{
 							theNode.flag = 4;
 							break;
 						}
+
+						//setup the new block
 						if (theNode.setTargetBlock(seekPtr, block) == -1)
 						{
 							theNode.flag = 4;
@@ -233,6 +251,7 @@ public class FileSystem
 
 				}
 
+				//if the block is not in the total block range, set flag to delete and exit
 				if (block >= superblock.totalBlocks)
 				{
 					theNode.flag = 4;
@@ -242,27 +261,32 @@ public class FileSystem
 				if (offsetPosition == 0)
 					writeData = new byte[Disk.blockSize];
 
+				//read the data to the data byte array
 				SysLib.rawread(block, writeData);
-				System.arraycopy(buffer, indexPosition, writeData, offsetPosition, toWrite);
-				SysLib.rawwrite(block, writeData);
-				indexPosition += toWrite;
+				System.arraycopy(buffer, indexPosition, writeData, offsetPosition, toWrite); //copy the new data to the arrray
+				SysLib.rawwrite(block, writeData); //write it back
+				indexPosition += toWrite; //increment variables
 				seekPtr += toWrite;
 
 				// sets the length to correct amount
 				
 			}
-			if (seekPtr > theNode.length)
+			//if the file size increased, update the inode's length
+			if (seekPtr > theNode.length) 
 			{
 				theNode.length = seekPtr;
 			}
+			//re-set the new seek position
 			seek(fd, indexPosition, 1);
 
+			//set flag
 			if(theNode.flag != 4)
 				theNode.flag = 1;
 
 			// saves to disk at iNumber
 			theNode.toDisk(fd.iNumber);
 		}
+		//return last seekposition
 		return indexPosition;
 	}
 

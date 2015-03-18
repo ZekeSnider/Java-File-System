@@ -12,7 +12,7 @@ public class FileTableEntry {  // Each table entry should have
         count = 1;           // at least one thread is using this entry.
         mode = m;            // once file access mode is set, it never changes.
 
-    	if ( mode.compareTo( "a" ) == 0 )
+    	if ( mode.compareTo( "a" ) == 0 ) //if the mode is append, set the seekpointer to the end of the file
     	    seekPtr = inode.length;
         }
     }
