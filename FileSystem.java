@@ -171,7 +171,9 @@ public class FileSystem
 		synchronized (fd)
 		{
 			if (fd.mode.compareTo( "a" ) == 0)
+			{
 				seekPtr = seek(fd, 0, 2);
+			}
 			else
 				seekPtr = fd.seekPtr;
 			theNode.flag = 3;
@@ -273,36 +275,34 @@ public class FileSystem
 		if (fd==null)
 			return -1;
 
-		int retVal = -1;
-		if(fd != null)
+		int retVal = fd.seekPtr;
+		int eofPtr = fsize(fd);
+
+		synchronized(fd)
 		{
-			synchronized(fd)
+			if(whence == 0)
 			{
-				if(whence == 0
-						&& (offset <= fsize(fd))
-						&& (offset >= 0))
-				{
-					fd.seekPtr = offset;
-					retVal = fd.seekPtr;
-				}
-				else if(whence == 1
-						&& (fd.seekPtr + offset <= fsize(fd)) 
-						&& (fd.seekPtr + offset >= 0))
-				{
-					fd.seekPtr += offset;
-					retVal = fd.seekPtr;
-				}
-				else if(whence == 2 
-						&& (fsize(fd) + offset <= fsize(fd)) 
-						&& (fsize(fd) + offset >= 0))
-				{
-					fd.seekPtr = (fsize(fd) + offset);
-					retVal = fd.seekPtr;
-				}
+				retVal = offset;
 			}
-			return fd.seekPtr;
-		} else
-			return -1;
+			else if(whence == 1)
+			{
+				retVal += offset;
+			}
+			else if(whence == 2)
+			{
+				retVal = eofPtr + offset;
+			}
+			else 
+				return -1;
+
+			if (retVal < 0)
+				return -1;
+
+			fd.seekPtr = retVal;
+		}
+		return retVal;
+		
+
 	}
 
 	// 6. 
