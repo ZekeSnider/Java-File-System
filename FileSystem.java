@@ -173,6 +173,7 @@ public class FileSystem
 			if (fd.mode.compareTo( "a" ) == 0)
 			{
 				seekPtr = seek(fd, 0, 2);
+				SysLib.cout("Hello the mode is append and writing... ptr=" + seekPtr+"\n");
 			}
 			else
 				seekPtr = fd.seekPtr;
@@ -248,9 +249,9 @@ public class FileSystem
 				// sets the length to correct amount
 				
 			}
-			if (fd.seekPtr > fd.inode.length)
+			if (seekPtr > theNode.length)
 			{
-				fd.inode.length = fd.seekPtr;
+				theNode.length = seekPtr;
 			}
 			seek(fd, indexPosition, 1);
 
@@ -258,7 +259,7 @@ public class FileSystem
 				theNode.flag = 1;
 
 			// saves to disk at iNumber
-			fd.inode.toDisk(fd.iNumber);
+			theNode.toDisk(fd.iNumber);
 		}
 		return indexPosition;
 	}
@@ -291,6 +292,7 @@ public class FileSystem
 			else if(whence == 2)
 			{
 				retVal = eofPtr + offset;
+				SysLib.cout("In seek. " + retVal + "=" + eofPtr + "+" + offset +  "\n");
 			}
 			else 
 				return -1;
