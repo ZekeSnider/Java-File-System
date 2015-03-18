@@ -24,6 +24,7 @@ public class Inode {
          
          SysLib.rawread(blockNum, readData);
 
+         //reads back length, count,flag, then the direct data, then the indirect
          length = SysLib.bytes2int(readData, offset + 0);
          count = SysLib.bytes2short(readData, offset + 4);
          flag = SysLib.bytes2short(readData, offset + 6);
@@ -45,6 +46,7 @@ public class Inode {
          int offset = (iNumber % 16) * iNodeSize;
          int blockNum = 1 + (iNumber / 16);
 
+         //writes length, count, flag, direct data, then the indirect data
          SysLib.int2bytes(length, writeData, offset + 0);
          SysLib.short2bytes(count, writeData, offset + 4);
          SysLib.short2bytes(flag, writeData, offset + 6);
@@ -57,18 +59,20 @@ public class Inode {
 
          SysLib.short2bytes(indirect, writeData, offset + 30);
 
-         SysLib.rawwrite(blockNum, writeData);
+         SysLib.rawwrite(blockNum, writeData); //writing the node back to disk
 
          return 0;
 
 
       }
 
+      //get location of indirect block
       public short getIndexBlockNumber( ) 
       {
          return indirect;
       }
 
+      //create an empty block to be used as an indirect block
       public boolean setIndexBlock( short indexBlockNumber )
       {
          //if the indexBlockNumber is not valid or if the indirect block
@@ -81,15 +85,18 @@ public class Inode {
             if (direct[i] == -1)
                return false;
 
+         //writing the block full of -1
          byte[] writeData =  new byte[Disk.blockSize];
          for (int i=0; i<Disk.blockSize/2; i+=2)
          {
             SysLib.short2bytes((short)-1, writeData, i);
          }
+         //write back to the disk 
          SysLib.rawwrite(indexBlockNumber, writeData);
          return true;
       }
 
+      //find the location of block from specified offset
       public short findTargetBlock( int offset ) 
       {
          int blockNum = offset/Disk.blockSize;
@@ -116,18 +123,19 @@ public class Inode {
 
       } 
 
+      //sets the data in inputBlock to the specified inode in either direct or indirect memory
       public short setTargetBlock (int iNodeNum, short inputBlock)
       {
          int blockNum, iBlockNum;
          byte[] data;
 
 
-         if (iNodeNum < 0)
+         if (iNodeNum < 0) //invalid inode
             return -1;
 
-         blockNum = iNodeNum / Disk.blockSize;
+         blockNum = iNodeNum / Disk.blockSize; //finding where the inode is located
 
-         if (blockNum < directSize)
+         if (blockNum < directSize) //if the block is in direct memory, set it and return success value
          {
             if (direct[blockNum] != -1)
                return -1;
@@ -136,18 +144,21 @@ public class Inode {
             direct[blockNum] = inputBlock;
             return 1;
          }
-         if (indirect == -1)
+         if (indirect == -1) //if it's not in direct and indirect is invalid, return an error
             return -1;
 
+         //reading the indirect block
          data = new byte[Disk.blockSize];
          SysLib.rawread(indirect, data);
 
+         //converting the new block to a short
          iBlockNum = blockNum - directSize;
          short targetBlock = SysLib.bytes2short(data, iBlockNum*2);
 
-         if (targetBlock > 0 )
+         if (targetBlock > 0 ) //invalid targetblock #
             return -1;
 
+         //inserting the data into the indirect block, and writing it back to disk
          SysLib.short2bytes(inputBlock, data, iBlockNum*2);
          SysLib.rawwrite(indirect,data);
          return 1;
